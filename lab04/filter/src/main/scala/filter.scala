@@ -50,8 +50,12 @@ class filter {
       if (offset.isDefined & topicName.isDefined) {
         if (offset.get == "earliest")
           kafkaParams += ("startingOffsets" -> "earliest")
-        else
-          kafkaParams += ("startingOffsets" -> s"""{"$topicName.get":{"0":$offset.get}}""")
+        else {
+          val topic = topicName.get
+          val offsetNum = offset.get
+          kafkaParams += ("startingOffsets" -> s"""{"$topic":{"0":$offsetNum}}""")
+        }
+
       }
 
 
