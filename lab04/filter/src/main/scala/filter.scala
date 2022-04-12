@@ -47,8 +47,11 @@ class filter {
         kafkaParams += ("subscribe" -> topicName.get)
       }
 
-      if ((offset.isDefined) & (topicName.isDefined)) {
-        kafkaParams += ("startingOffsets" -> s"""{"$topicName.get":{"0":$offset.get}}""")
+      if (offset.isDefined & topicName.isDefined) {
+        if (offset.get == "earliest")
+          kafkaParams += ("startingOffsets" -> "earliest")
+        else
+          kafkaParams += ("startingOffsets" -> s"""{"$topicName.get":{"0":$offset.get}}""")
       }
 
 
