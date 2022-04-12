@@ -23,13 +23,14 @@ import org.apache.spark.sql.functions._
 
 object filter {
 
-  val spark: SparkSession =
-    SparkSession
-      .builder()
-      .appName("eroshkin_lab04a")
-      .getOrCreate()
+
 
   def main(args: Array[String]): Unit = {
+    val spark: SparkSession =
+      SparkSession
+        .builder()
+        .appName("eroshkin_lab04a")
+        .getOrCreate()
     import spark.implicits._
     // путь (полный или относительный), куда будут писаться фильтрованные данные.
     val dir = spark.sparkContext.getConf.getOption("spark.filter.output_dir_prefix")
