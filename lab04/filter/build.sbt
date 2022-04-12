@@ -1,10 +1,9 @@
-ThisBuild / version := "0.1.0-SNAPSHOT"
+name := "filter"
 
-ThisBuild / scalaVersion := "2.11.12"
+version := "1.0"
 
-lazy val root = (project in file("."))
-  .settings(
-    name := "filter",
-    idePackagePrefix := Some("org.edu")
-  )
-libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.8" % "provided"
+scalaVersion := "2.11.12"
+
+libraryDependencies += "org.apache.spark" %% "spark-core" % "2.4.5"
+
+libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.5"
