@@ -19,7 +19,6 @@ I. Задача с высоты птичьего полета
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
-import sys.process._
 
 
 class filter {
@@ -30,70 +29,68 @@ class filter {
       .appName("eroshkin_lab03")
       .getOrCreate()
 
-  def main(arg: Array[String]): Unit = {
+  def main(args: Array[String]): Unit = {
+    import spark.implicits._
 
-    def main(args: Array[String]): Unit = {
-      import spark.implicits._
+    val dir = spark.sparkContext.getConf.getOption("spark.filter.output_dir_prefix") // путь (полный или относительный), куда будут писаться фильтрованные данные.
+    val topicName = spark.sparkContext.getConf.getOption("spark.filter.topic_name") //название топика для чтения
+    val offset = spark.sparkContext.getConf.getOption("spark.filter.offset") // оффсет в нулевой партиции топика, с которого должно происходить чтение. Также принимаются значение "earliest".
 
-      val dir = spark.sparkContext.getConf.getOption("spark.filter.output_dir_prefix") // путь (полный или относительный), куда будут писаться фильтрованные данные.
-      val topicName = spark.sparkContext.getConf.getOption("spark.filter.topic_name") //название топика для чтения
-      val offset = spark.sparkContext.getConf.getOption("spark.filter.offset") // оффсет в нулевой партиции топика, с которого должно происходить чтение. Также принимаются значение "earliest".
+    var kafkaParams = Map(
+      "kafka.bootstrap.servers" -> "spark-master-1:6667"
+    )
 
-      var kafkaParams = Map(
-        "kafka.bootstrap.servers" -> "spark-master-1:6667"
-      )
-
-      if (topicName.isDefined) {
-        kafkaParams += ("subscribe" -> topicName.get)
-      }
-
-      if (offset.isDefined & topicName.isDefined) {
-        if (offset.get == "earliest")
-          kafkaParams += ("startingOffsets" -> "earliest")
-        else {
-          val topic = topicName.get
-          val offsetNum = offset.get
-          kafkaParams += ("startingOffsets" -> s"""{"$topic":{"0":$offsetNum}}""")
-        }
-
-      }
-
-
-      val df = spark
-        .read
-        .format("kafka")
-        .options(kafkaParams)
-        .load
-
-      val jsonString = df
-        .select(col("value").cast("string"))
-        .as[String]
-
-      val parsed = spark
-        .read
-        .json(jsonString)
-        .withColumn("date", from_unixtime(col("timestamp") / 1000, "yyyyMMdd"))
-        .withColumn("p_date", col("date"))
-
-      val views = parsed
-        .filter(col("event_type") === "view")
-      val buy = parsed
-        .filter(col("event_type") === "buy")
-
-      views
-        .write
-        .format("json")
-        .mode("overwrite")
-        .partitionBy("p_date")
-        .save(dir + "/view")
-
-      buy
-        .write
-        .format("json")
-        .mode("overwrite")
-        .partitionBy("p_date")
-        .save(dir + "/buy")
+    if (topicName.isDefined) {
+      kafkaParams += ("subscribe" -> topicName.get)
     }
+
+    if (offset.isDefined & topicName.isDefined) {
+      if (offset.get == "earliest")
+        kafkaParams += ("startingOffsets" -> "earliest")
+      else {
+        val topic = topicName.get
+        val offsetNum = offset.get
+        kafkaParams += ("startingOffsets" -> s"""{"$topic":{"0":$offsetNum}}""")
+      }
+
+    }
+
+
+    val df = spark
+      .read
+      .format("kafka")
+      .options(kafkaParams)
+      .load
+
+    val jsonString = df
+      .select(col("value").cast("string"))
+      .as[String]
+
+    val parsed = spark
+      .read
+      .json(jsonString)
+      .withColumn("date", from_unixtime(col("timestamp") / 1000, "yyyyMMdd"))
+      .withColumn("p_date", col("date"))
+
+    val views = parsed
+      .filter(col("event_type") === "view")
+    val buy = parsed
+      .filter(col("event_type") === "buy")
+
+    views
+      .write
+      .format("json")
+      .mode("overwrite")
+      .partitionBy("p_date")
+      .save(dir + "/view")
+
+    buy
+      .write
+      .format("json")
+      .mode("overwrite")
+      .partitionBy("p_date")
+      .save(dir + "/buy")
   }
+
 
 }
