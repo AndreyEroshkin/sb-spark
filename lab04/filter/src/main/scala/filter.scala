@@ -24,7 +24,6 @@ import org.apache.spark.sql.functions._
 object filter {
 
 
-
   def main(args: Array[String]): Unit = {
     val spark: SparkSession =
       SparkSession
@@ -33,7 +32,7 @@ object filter {
         .getOrCreate()
     import spark.implicits._
     // путь (полный или относительный), куда будут писаться фильтрованные данные.
-    val outputDirPrefix = spark.sparkContext.getConf.getOption("spark.filter.output_dir_prefix")
+    val dir = spark.conf.get("spark.filter.output_dir_prefix")
     //название топика для чтения
     val topicName = spark.sparkContext.getConf.getOption("spark.filter.topic_name")
     // оффсет в нулевой партиции топика, с которого должно происходить чтение. Также принимаются значение "earliest".
@@ -56,10 +55,6 @@ object filter {
         kafkaParams += ("startingOffsets" -> s"""{"$topic":{"0":$offsetNum}}""")
       }
 
-    }
-
-    if (outputDirPrefix.isDefined) {
-     val  dir = outputDirPrefix.get
     }
 
     val df = spark
