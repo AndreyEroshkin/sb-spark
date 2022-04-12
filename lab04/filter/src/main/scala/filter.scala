@@ -39,19 +39,32 @@ class filter {
       def main(args: Array[String]): Unit = {
         import spark.implicits._
 
-        val dir = spark.conf.get("spark.filter.output_dir_prefix") // путь (полный или относительный), куда будут писаться фильтрованные данные.
-        val topic = spark.conf.get("spark.filter.topic_name") //название топика для чтения
-        var offset = spark.conf.get("spark.filter.offset") // оффсет в нулевой партиции топика, с которого должно происходить чтение. Также принимаются значение "earliest".
+        val dir = spark.sparkContext.getConf.getOption("spark.filter.output_dir_prefix") // путь (полный или относительный), куда будут писаться фильтрованные данные.
+        val topicName = spark.sparkContext.getConf.getOption("spark.filter.topic_name") //название топика для чтения
+        val offset = spark.sparkContext.getConf.getOption("spark.filter.offset") // оффсет в нулевой партиции топика, с которого должно происходить чтение. Также принимаются значение "earliest".
 
-        if (offset != "earliest") {
-          offset = s"""{"$topic":{"0":$offset}}"""
+//        if (offset != "earliest") {
+//          offset = s"""{"$topic":{"0":$offset}}"""
+//        }
+//
+//        val kafkaParams = Map(
+//          "kafka.bootstrap.servers" -> "spark-master-1:6667",
+//          "subscribe" -> topic,
+//          "startingOffsets" -> offset
+//        )
+
+        var kafkaParams = Map(
+          "kafka.bootstrap.servers" -> "spark-master-1:6667"
+        )
+
+        if(topicName.isDefined) {
+          kafkaParams += ("subscribe" -> topicName.get)
         }
 
-        val kafkaParams = Map(
-          "kafka.bootstrap.servers" -> "spark-master-1:6667",
-          "subscribe" -> topic,
-          "startingOffsets" -> offset
-        )
+        if((offset.isDefined) & (topicName.isDefined)){
+          kafkaParams += ("startingOffsets" -> s"""{"$topicName.get":{"0":$offset.get}}""")
+        }
+
 
         val df = spark
           .read
