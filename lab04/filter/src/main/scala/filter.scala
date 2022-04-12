@@ -33,7 +33,7 @@ object filter {
         .getOrCreate()
     import spark.implicits._
     // путь (полный или относительный), куда будут писаться фильтрованные данные.
-    val dir = spark.sparkContext.getConf.getOption("spark.filter.output_dir_prefix")
+    val outputDirPrefix = spark.sparkContext.getConf.getOption("spark.filter.output_dir_prefix")
     //название топика для чтения
     val topicName = spark.sparkContext.getConf.getOption("spark.filter.topic_name")
     // оффсет в нулевой партиции топика, с которого должно происходить чтение. Также принимаются значение "earliest".
@@ -58,6 +58,9 @@ object filter {
 
     }
 
+    if (outputDirPrefix.isDefined) {
+     val  dir = outputDirPrefix.get
+    }
 
     val df = spark
       .read
