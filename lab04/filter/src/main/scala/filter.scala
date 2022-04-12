@@ -21,20 +21,22 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 
 
-class filter {
+object filter {
 
   val spark: SparkSession =
     SparkSession
       .builder()
-      .appName("eroshkin_lab03")
+      .appName("eroshkin_lab04a")
       .getOrCreate()
 
   def main(args: Array[String]): Unit = {
     import spark.implicits._
-
-    val dir = spark.sparkContext.getConf.getOption("spark.filter.output_dir_prefix") // путь (полный или относительный), куда будут писаться фильтрованные данные.
-    val topicName = spark.sparkContext.getConf.getOption("spark.filter.topic_name") //название топика для чтения
-    val offset = spark.sparkContext.getConf.getOption("spark.filter.offset") // оффсет в нулевой партиции топика, с которого должно происходить чтение. Также принимаются значение "earliest".
+    // путь (полный или относительный), куда будут писаться фильтрованные данные.
+    val dir = spark.sparkContext.getConf.getOption("spark.filter.output_dir_prefix")
+    //название топика для чтения
+    val topicName = spark.sparkContext.getConf.getOption("spark.filter.topic_name")
+    // оффсет в нулевой партиции топика, с которого должно происходить чтение. Также принимаются значение "earliest".
+    val offset = spark.sparkContext.getConf.getOption("spark.filter.offset")
 
     var kafkaParams = Map(
       "kafka.bootstrap.servers" -> "spark-master-1:6667"
