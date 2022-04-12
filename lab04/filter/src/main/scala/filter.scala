@@ -1,5 +1,3 @@
-package org.edu
-
 /*
 Kafka bootstrap: spark-master-1:6667
 
