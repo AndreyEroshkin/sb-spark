@@ -32,8 +32,27 @@ class readInput(path: String, prefix: String) {
 }
 
 
-class users_items {
+object users_items {
+  def main(): Unit = {
+    val spark: SparkSession =
+      SparkSession
+        .builder()
+        .config("spark.sql.session.timeZone", "UTC")
+        .getOrCreate()
 
+
+    val update: String = spark.conf.get("spark.users_items.update") // : 0 или 1 режим работы, сделать новую матрицу users_items или добавить строки к существующей. По умолчанию - 1, добавить строки в матрицу.
+    val outputDir: String = spark.conf.get("spark.users_items.output_dir") // : абсолютный или относительный путь к выходным данным.
+    val inputDir: String = spark.conf.get("spark.users_items.input_dir") // : абсолютный или относительный путь к входным данным.
+
+    if (update == "0") {
+      initialLoad(inputDir: String, outputDir: String)
+    }
+    else if (update == "1") {
+      updateLoad(inputDir: String, outputDir: String)
+    }
+    spark.stop
+  }
   def initialLoad(inputDir: String, outputDir: String): Unit = {
     val view = new readInput(path = inputDir + "view/*", prefix = "view_")
     val buy = new readInput(path = inputDir + "buy/*", prefix = "view_")
@@ -94,24 +113,5 @@ class users_items {
       .save(outputDir + s"/$maxDate")
   }
 
-  def main(): Unit = {
-    val spark: SparkSession =
-      SparkSession
-        .builder()
-        .config("spark.sql.session.timeZone", "UTC")
-        .getOrCreate()
 
-
-    val update: String = spark.conf.get("spark.users_items.update") // : 0 или 1 режим работы, сделать новую матрицу users_items или добавить строки к существующей. По умолчанию - 1, добавить строки в матрицу.
-    val outputDir: String = spark.conf.get("spark.users_items.output_dir") // : абсолютный или относительный путь к выходным данным.
-    val inputDir: String = spark.conf.get("spark.users_items.input_dir") // : абсолютный или относительный путь к входным данным.
-
-    if (update == "0") {
-      initialLoad(inputDir: String, outputDir: String)
-    }
-    else if (update == "1") {
-      updateLoad(inputDir: String, outputDir: String)
-    }
-    spark.stop
-  }
 }
