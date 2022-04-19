@@ -31,38 +31,6 @@ class readInput(path: String, prefix: String) {
 
 }
 
-def readOutput(path: String) ={
-  val spark = SparkSession.getActiveSession.getOrElse {
-    throw new IllegalArgumentException("Could not find active SparkSession")
-  }
-
-
-  val df = spark
-    .read
-    .format("parquet")
-    .load(path + "/20200429/*")
-    .persist()
-df
-}
-
-def unionDiffDF(df1: DataFrame, df2: DataFrame): DataFrame = {
-  val merged_cols = df1.columns.toSet ++ df2.columns.toSet
-  import org.apache.spark.sql.functions.{col, lit}
-  def getNewColumns(column: Set[String], merged_cols: Set[String]) = {
-    merged_cols.toList.map(x => x match {
-      case x if column.contains(x) => col(x)
-      case _ => lit(null).as(x)
-    })
-  }
-
-  val new_df1 = df1.select(getNewColumns(df1.columns.toSet, merged_cols): _*)
-  val new_df2 = df2.select(getNewColumns(df2.columns.toSet, merged_cols): _*)
-
-  val merged_df = new_df1.unionByName(new_df2)
-
-  merged_df
-}
-
 
 class users_items {
 
@@ -76,6 +44,37 @@ class users_items {
       .format("parquet")
       .mode("overwrite")
       .save(outputDir + s"/$maxDate")
+  }
+
+  def unionDiffDF(df1: DataFrame, df2: DataFrame): DataFrame = {
+    val merged_cols = df1.columns.toSet ++ df2.columns.toSet
+    import org.apache.spark.sql.functions.{col, lit}
+    def getNewColumns(column: Set[String], merged_cols: Set[String]) = {
+      merged_cols.toList.map(x => x match {
+        case x if column.contains(x) => col(x)
+        case _ => lit(null).as(x)
+      })
+    }
+
+    val new_df1 = df1.select(getNewColumns(df1.columns.toSet, merged_cols): _*)
+    val new_df2 = df2.select(getNewColumns(df2.columns.toSet, merged_cols): _*)
+
+    val merged_df = new_df1.unionByName(new_df2)
+
+    merged_df
+  }
+
+  def readOutput(path: String) = {
+    val spark = SparkSession.getActiveSession.getOrElse {
+      throw new IllegalArgumentException("Could not find active SparkSession")
+    }
+
+    val df = spark
+      .read
+      .format("parquet")
+      .load(path + "/20200429/*")
+      .persist()
+    df
   }
 
   def updateLoad(inputDir: String, outputDir: String): Unit = {
