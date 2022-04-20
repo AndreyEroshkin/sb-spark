@@ -82,12 +82,10 @@ object users_items {
 //
 //    merged_df
     def union_cols(myCols: Set[String], allCols: Set[String]) = {
-      allCols.toList.map(x => x
-      match {
+      allCols.toList.map {
         case x if myCols.contains(x) => col(x)
-        case _ => lit(0).as(x)
+        case x => lit(0).as(x)
       }
-      )
     }
 
     val df1Cols = df1.columns.toSet
@@ -125,16 +123,19 @@ def updateLoad(inputDir: String, outputDir: String): Unit = {
 //    .count
   val newData = view.matrix.join(buy.matrix, Seq("uid"), "full")
   val maxDate = view.maxDate.max(buy.maxDate)
-
+  println(s"maxDate = $maxDate")
   val oldData = readOutput(outputDir)
 
-  val resMatrix = unionDiffDF(oldData, newData)
+  val resMatrix = unionDiffDF(oldData, newData).persist()
+
+  resMatrix.filter(col("uid") === "8bb01460217f871cbe0ae8fa1ceac2cc").show
 
   resMatrix
     .write
     .format("parquet")
     .mode("overwrite")
-    .save(outputDir + s"/$maxDate")
+//    .save(outputDir + s"/$maxDate")
+    .save(outputDir + s"/20200430")
 }
 
 
