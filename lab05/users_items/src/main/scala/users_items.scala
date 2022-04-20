@@ -33,10 +33,11 @@ class readInput(path: String, prefix: String) {
 
 
 object users_items {
-  def main(): Unit = {
+  def main(args: Array[String]): Unit = {
     val spark: SparkSession =
       SparkSession
         .builder()
+        .appName("eroshkin_lab05")
         .config("spark.sql.session.timeZone", "UTC")
         .getOrCreate()
 
@@ -53,6 +54,7 @@ object users_items {
     }
     spark.stop
   }
+
   def initialLoad(inputDir: String, outputDir: String): Unit = {
     val view = new readInput(path = inputDir + "view/*", prefix = "view_")
     val buy = new readInput(path = inputDir + "buy/*", prefix = "view_")
@@ -83,7 +85,7 @@ object users_items {
     merged_df
   }
 
-  def readOutput(path: String) = {
+  def readOutput(path: String): DataFrame = {
     val spark = SparkSession.getActiveSession.getOrElse {
       throw new IllegalArgumentException("Could not find active SparkSession")
     }
@@ -93,10 +95,12 @@ object users_items {
       .format("parquet")
       .load(path + "/20200429/*")
       .persist()
+    df.count
     df
   }
 
   def updateLoad(inputDir: String, outputDir: String): Unit = {
+
     val view = new readInput(path = inputDir + "view/*", prefix = "view_")
     val buy = new readInput(path = inputDir + "buy/*", prefix = "view_")
     val newData = view.matrix.join(buy.matrix, Seq("uid"), "full")
