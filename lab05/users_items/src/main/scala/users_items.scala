@@ -56,8 +56,8 @@ object users_items {
   }
 
   def initialLoad(inputDir: String, outputDir: String): Unit = {
-    val view = new readInput(path = inputDir + "view/*", prefix = "view_")
-    val buy = new readInput(path = inputDir + "buy/*", prefix = "view_")
+    val view = new readInput(path = inputDir + "/view/*", prefix = "view_")
+    val buy = new readInput(path = inputDir + "/buy/*", prefix = "view_")
     val result = view.matrix.join(buy.matrix, Seq("uid"), "full")
     val maxDate = view.maxDate.max(buy.maxDate)
 
@@ -101,8 +101,8 @@ object users_items {
 
   def updateLoad(inputDir: String, outputDir: String): Unit = {
 
-    val view = new readInput(path = inputDir + "view/*", prefix = "view_")
-    val buy = new readInput(path = inputDir + "buy/*", prefix = "view_")
+    val view = new readInput(path = inputDir + "/view/*", prefix = "view_")
+    val buy = new readInput(path = inputDir + "/buy/*", prefix = "view_")
     val newData = view.matrix.join(buy.matrix, Seq("uid"), "full")
     val maxDate = view.maxDate.max(buy.maxDate)
 
