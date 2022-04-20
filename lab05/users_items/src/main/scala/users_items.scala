@@ -117,7 +117,12 @@ def readOutput(path: String): DataFrame = {
 def updateLoad(inputDir: String, outputDir: String): Unit = {
 
   val view = new readInput(path = inputDir + "/view/*", prefix = "view_")
-  val buy = new readInput(path = inputDir + "/buy/*", prefix = "view_")
+  val buy = new readInput(path = inputDir + "/buy/*", prefix = "buy_")
+//  val newData = view.prepared
+//    .union(buy.prepared)
+//    .groupBy("uid")
+//    .pivot("item")
+//    .count
   val newData = view.matrix.join(buy.matrix, Seq("uid"), "full")
   val maxDate = view.maxDate.max(buy.maxDate)
 
