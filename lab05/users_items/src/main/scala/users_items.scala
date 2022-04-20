@@ -68,54 +68,69 @@ object users_items {
   }
 
   def unionDiffDF(df1: DataFrame, df2: DataFrame): DataFrame = {
-    val merged_cols = df1.columns.toSet ++ df2.columns.toSet
-    import org.apache.spark.sql.functions.{col, lit}
-    def getNewColumns(column: Set[String], merged_cols: Set[String]) = {
-      merged_cols.toList.map(x => x match {
-        case x if column.contains(x) => col(x)
-        case _ => lit(null).as(x)
-      })
+    //    val merged_cols = df1.columns.toSet ++ df2.columns.toSet
+    //    import org.apache.spark.sql.functions.{col, lit}
+    //    def getNewColumns(column: Set[String], merged_cols: Set[String]) = {
+    //      merged_cols.toList.map(x => x match {
+    //        case x if column.contains(x) => col(x)
+    //        case _ => lit(null).as(x)
+    //      })
+//    val new_df1 = df1.select(getNewColumns(df1.columns.toSet, merged_cols): _*)
+//    val new_df2 = df2.select(getNewColumns(df2.columns.toSet, merged_cols): _*)
+//
+//    val merged_df = new_df1.unionByName(new_df2)
+//
+//    merged_df
+    def union_cols(myCols: Set[String], allCols: Set[String]) = {
+      allCols.toList.map(x => x
+      match {
+        case x if myCols.contains(x) => col(x)
+        case _ => lit(0).as(x)
+      }
+      )
     }
 
-    val new_df1 = df1.select(getNewColumns(df1.columns.toSet, merged_cols): _*)
-    val new_df2 = df2.select(getNewColumns(df2.columns.toSet, merged_cols): _*)
+    val df1Cols = df1.columns.toSet
+    val df2Cols = df2.columns.toSet
+    val total = df1Cols ++ df2Cols
 
-    val merged_df = new_df1.unionByName(new_df2)
-
-    merged_df
-  }
-
-  def readOutput(path: String): DataFrame = {
-    val spark = SparkSession.getActiveSession.getOrElse {
-      throw new IllegalArgumentException("Could not find active SparkSession")
-    }
-
-    val df = spark
-      .read
-      .format("parquet")
-      .load(path + "/20200429/*")
-      .persist()
-    df.count
-    df
-  }
-
-  def updateLoad(inputDir: String, outputDir: String): Unit = {
-
-    val view = new readInput(path = inputDir + "/view/*", prefix = "view_")
-    val buy = new readInput(path = inputDir + "/buy/*", prefix = "view_")
-    val newData = view.matrix.join(buy.matrix, Seq("uid"), "full")
-    val maxDate = view.maxDate.max(buy.maxDate)
-
-    val oldData = readOutput(outputDir)
-
-    val resMatrix = unionDiffDF(oldData, newData)
+    val resMatrix = df1.select(union_cols(df1Cols, total): _*).union(df2.select(union_cols(df2Cols, total): _*))
 
     resMatrix
-      .write
-      .format("parquet")
-      .mode("overwrite")
-      .save(outputDir + s"/$maxDate")
   }
+
+
+def readOutput(path: String): DataFrame = {
+  val spark = SparkSession.getActiveSession.getOrElse {
+    throw new IllegalArgumentException("Could not find active SparkSession")
+  }
+
+  val df = spark
+    .read
+    .format("parquet")
+    .load(path + "/20200429/*")
+    .persist()
+  df.count
+  df
+}
+
+def updateLoad(inputDir: String, outputDir: String): Unit = {
+
+  val view = new readInput(path = inputDir + "/view/*", prefix = "view_")
+  val buy = new readInput(path = inputDir + "/buy/*", prefix = "view_")
+  val newData = view.matrix.join(buy.matrix, Seq("uid"), "full")
+  val maxDate = view.maxDate.max(buy.maxDate)
+
+  val oldData = readOutput(outputDir)
+
+  val resMatrix = unionDiffDF(oldData, newData)
+
+  resMatrix
+    .write
+    .format("parquet")
+    .mode("overwrite")
+    .save(outputDir + s"/$maxDate")
+}
 
 
 }
