@@ -95,3 +95,13 @@ object filter {
 
 
 }
+
+val df1 = spark.read.option("header","true").csv(filePath)
+val columns = List("School", "Type", "Group")
+var df2 = df1.withColumn("CombinedArray", array(columns.map{
+  colName => regexp_replace(regexp_replace(df1(colName),"(^)",s"$colName: "),"(-)",s", $colName: ")
+}:_*))
+
+columns.map{
+  colName => regexp_replace(regexp_replace(df1(colName),"(^)",s"$colName: "),"(-)",s", $colName: ")
+}:_*
